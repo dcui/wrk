@@ -122,7 +122,7 @@ int aeCreateFileEvent(aeEventLoop *eventLoop, int fd, int mask,
     return AE_OK;
 }
 
-void aeDeleteFileEvent(aeEventLoop *eventLoop, int fd, int mask)
+static void _aeDeleteFileEvent(aeEventLoop *eventLoop, int fd, int mask)
 {
     if (fd >= eventLoop->setsize) return;
     aeFileEvent *fe = &eventLoop->events[fd];
@@ -137,7 +137,18 @@ void aeDeleteFileEvent(aeEventLoop *eventLoop, int fd, int mask)
             if (eventLoop->events[j].mask != AE_NONE) break;
         eventLoop->maxfd = j;
     }
+}
+
+void aeDeleteFileEvent(aeEventLoop *eventLoop, int fd, int mask)
+{
+    _aeDeleteFileEvent(eventLoop, fd, mask);
     aeApiDelEvent(eventLoop, fd, mask);
+}
+
+void aeCloseFileEvent(aeEventLoop *eventLoop, int fd, int mask)
+{
+    _aeDeleteFileEvent(eventLoop, fd, mask);
+    aeApiCloseEvent(eventLoop, fd, mask);
 }
 
 int aeGetFileEvents(aeEventLoop *eventLoop, int fd) {
